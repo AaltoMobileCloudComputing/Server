@@ -9,8 +9,25 @@ var routes = require('./routes/index');
 var user = require('./routes/user');
 var event = require('./routes/event');
 var calendar = require('./routes/calendar');
+var mongo = require('mongodb').MongoClient;
 
 var app = express();
+
+// Set up DB connection
+var url = 'mongodb://localhost:27017/mcc';
+var db;
+mongo.connect(url, function(err, connectedDb) {
+  if (err === null) {
+    console.log("Connected correctly to server");
+  }
+  db = connectedDb;
+});
+
+// Make DB accessible to router
+app.use(function(req,res,next){
+  req.db = db;
+  next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
