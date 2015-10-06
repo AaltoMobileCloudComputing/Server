@@ -21,8 +21,11 @@ require('mongodb').Cursor.prototype.paginate = require('./util').paginate;
 var url = 'mongodb://localhost:27017/mcc';
 var db;
 mongo.connect(url, function (err, connectedDb) {
-  if (err === null) {
-    console.log("Connected correctly to server");
+  if (err !== null) {
+    console.log("Error connecting to database");
+    console.log(err);
+  } else {
+    console.log("Connected to database");
   }
   db = connectedDb;
 });
