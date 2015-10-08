@@ -1,5 +1,5 @@
 exports.err400 = function (error) {
-  this.status(400).json({error: error});
+  return this.status(400).json({error: error.message || error});
 };
 
 exports.paginate = function (limit, offset) {
@@ -11,20 +11,12 @@ exports.paginate = function (limit, offset) {
 };
 
 exports.convertTimes = function (startStr, endStr) {
-  console.log(startStr);
-  console.log(endStr);
-  if (!startStr && !endStr) {
-    return {error: 'Invalid start and end times'}
-  } else if (!startStr) {
-    return {error: 'Invalid start time'}
-  } else if (!endStr) {
-    return {error: 'Invalid end time'}
-  }
-
   var start = new Date(startStr);
   var end = new Date(endStr);
-  if (start > end) {
-    return {error: 'Start time is after end time'}
+  if (!startStr || !endStr || isNaN(start) || isNaN(end)) {
+    throw new Error('Invalid start and/or end times');
+  } else if (start > end) {
+    throw new Error('Start time is after end time');
   } else {
     return {
       start: start,
@@ -36,7 +28,7 @@ exports.convertTimes = function (startStr, endStr) {
 exports.convertID = function (idStr) {
   var ObjectID = require('mongodb').ObjectID;
   if (!ObjectID.isValid(idStr)) {
-    return null;
+    return idStr;
   } else {
     return ObjectID(idStr);
   }
@@ -45,4 +37,45 @@ exports.convertID = function (idStr) {
 // TODO: Implement
 exports.generateApiToken = function () {
   return 'api_token';
+};
+
+exports.insertOne = function (doc, collection) {
+  return collection.insertOne(doc).then(function(doc) {
+    return new Promise(function (resolve, reject) {
+      resolve(doc);
+    });
+  });
+};
+
+exports.findOne = function (id, collection) {
+  return collection.findOne({_id: id}).then(function(doc) {
+    return new Promise(function (resolve, reject) {
+      if (doc === null) {
+        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(doc);
+    });
+  });
+};
+
+exports.updateOne = function (id, collection, update) {
+  return collection.findOneAndUpdate({_id: id}, update, {returnOriginal: false}).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (result.value === null) {
+        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(result);
+    });
+  });
+};
+
+exports.deleteOne = function (id, collection) {
+  return collection.findOneAndDelete({_id: id}).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (result.value === null) {
+        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(result);
+    });
+  });
 };
