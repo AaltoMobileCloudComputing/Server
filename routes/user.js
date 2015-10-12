@@ -5,7 +5,9 @@ var crypto = require('crypto');
 
 // TODO: Implement
 function parseQueryParams(req) {
-  return {};
+  return {
+
+  };
 }
 
 function createUserFromRequest(req) {
@@ -23,9 +25,24 @@ function createUserFromRequest(req) {
  */
 router.get('/', function (req, res) {
   var collection = req.db.collection('users');
-  var query = parseQueryParams(req);
-  collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, users) {
-    res.json(users);
+  var username = req.query.username;
+  collection.findOne({username: username}, function (err, user) {
+    if (user == null)
+      res.err400('User not found');
+    else {
+      if (req.query.password) {
+        var passhash =  crypto.pbkdf2Sync(req.query.password, user.salt, 512, 256).toString('hex');
+        if (passhash == user.passhash) {
+          delete user.salt;
+          delete user.passhash;
+          res.json(user);
+        } else {
+          return res.err400("Wrong password");
+        }
+      } else {
+        return res.err400("Password not submited");
+      }
+    }
   });
 });
 
@@ -108,7 +125,7 @@ router.delete('/:id', function (req, res) {
   // Deleting user leaves "null" references to calendars' userID arrays
   var id = util.convertID(req.params.id);
   var users = req.db.collection('users');
-  users.findOneAndDelete({_id: id}, function (err, result) {
+  users.findOneAndDelete({$or: [{_id: id}, {username: id}]}, function (err, result) {
     if (result === null || result.value === null) {
       return res.err400('user not found');
     } else {
