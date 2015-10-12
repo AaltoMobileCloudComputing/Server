@@ -36,7 +36,8 @@ exports.convertID = function (idStr) {
 
 // TODO: Implement
 exports.generateApiToken = function () {
-  return 'api_token';
+  var crypto = require('crypto');
+  return crypto.randomBytes(50).toString('hex');
 };
 
 exports.insertOne = function (doc, collection) {
