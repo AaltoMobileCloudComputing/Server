@@ -9,6 +9,7 @@ function parseQueryParams(req) {
 }
 
 function createUserFromRequest(req) {
+  console.log(req.body);
   return {
     username: req.body.username,
     firstname: req.body.firstname,
@@ -46,16 +47,16 @@ router.get('/:id', function (req, res) {
  */
 router.post('/', function (req, res) {
   var user = createUserFromRequest(req);
+
   for (var property in user) {
     if (user.hasOwnProperty(property) && user[property] === null)
       return res.err400(property + ' must be non-empty');
   }
-  user.salt = crypto.randomBytes(256);
-  user.passhash = crypto.pbkdf2Sync(user.password, user.salt, 512, 'sha256'); // Hash password with salt
+  user.salt = crypto.randomBytes(30).toString('hex');
+  user.passhash = crypto.pbkdf2Sync(user.password, user.salt, 512, 256).toString('hex'); // Hash password with salt
   delete user.password; // Remove password after it is no longer needed
   user.token = util.generateApiToken();
   user.calendars = [];
-
   var collection = req.db.collection('users');
   // TODO need to implement check that email or username are uniueq
   collection.insertOne(user, function (err, result) {
