@@ -48,14 +48,16 @@ router.get('/', function (req, res) {
 });
 
 router.get('/:id', function (req, res) {
-  var id = util.convertID(req.params.id);
-  var collection = req.db.collection('users');
-  collection.findOne({_id: id}, function (err, user) {
-    if (user === null) {
-      return res.err400('User not found');
-    } else {
-      res.json(user);
+  var id = req.params.id;
+  util.auth(req, function (user) {
+    if (user == null || id != user._id) {
+      return res.err400("Not valid token");
     }
+    else {
+      delete user.salt;
+      delete user.passhash;
+      res.json(user);
+    }  
   });
 });
 
