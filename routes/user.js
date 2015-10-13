@@ -20,6 +20,7 @@ function createUserFromRequest(req) {
   }
 }
 
+
 /*
  * GET
  */
@@ -94,26 +95,31 @@ router.post('/', function (req, res) {
 });
 
 router.post('/:id', function (req, res) {
-  // TODO: Write less repetitive solution
-  var userUpdate = {};
-  if (req.body.firstname) {
-    userUpdate.firstname = req.body.firstname;
-  }
-  if (req.body.lastname) {
-    userUpdate.lastname = req.body.lastname;
-  }
-  if (req.body.email) {
-    userUpdate.email = req.body.email; // Maybe validate this?
-  }
-
-
-  var id = util.convertID(req.params.id);
-  var collection = req.db.collection('users');
-  collection.findOneAndUpdate({_id: id}, {$set: userUpdate}, {returnOriginal: false}, function (err, user) {
-    if (user === null) {
-      return res.err400('user not found');
+  var id = req.params.id;
+  util.auth(req, function (user) {
+    if (user == null || id != user._id) {
+      return res.err400("Not valid token");
     } else {
-      res.json(user);
+      for (prop in req.body) {
+        if (prop == "salt" || prop == "passhash" || prop == "username" || prop == "_id") {
+
+        }
+        else if (prop == "password") {
+          user.passhash = crypto.pbkdf2Sync(req.body.password, user.salt, 512, 256).toString('hex');
+        }
+        else if (prop in user) {
+          user[prop] = req.body[prop];
+        }
+      }
+      var collection = req.db.collection('users');
+      collection.update({_id: user._id}, user, function (err, result) {
+        if (result == null) {
+          console.log(result);
+          return res.err400('user not found');
+        } else {
+          res.json(result);
+        }
+      });
     }
   });
 });
@@ -121,13 +127,13 @@ router.post('/:id', function (req, res) {
 /*
  * DELETE
  */
-router.delete('/:id', function (req, res) {
+router.delete('/', function (req, res) {
   // Deleting user leaves "null" references to calendars' userID arrays
-  var id = util.convertID(req.params.id);
+  var token = req.query.token;
   var users = req.db.collection('users');
-  users.findOneAndDelete({$or: [{_id: id}, {username: id}]}, function (err, result) {
+  users.findOneAndDelete({token: token}, function (err, result) {
     if (result === null || result.value === null) {
-      return res.err400('user not found');
+      return res.err400('Not valid token');
     } else {
       res.json(result);
     }

@@ -38,8 +38,9 @@ exports.convertID = function (idStr) {
 exports.generateApiToken = function () {
   /* This is very simple solution */
   var crypto = require('crypto');
-  return crypto.randomBytes(50).toString('hex');
+  return crypto.randomBytes(20).toString('hex');
 };
+
 
 exports.insertOne = function (doc, collection) {
   return collection.insertOne(doc).then(function(doc) {
@@ -79,5 +80,13 @@ exports.deleteOne = function (id, collection) {
       }
       resolve(result);
     });
+  });
+};
+
+exports.auth = function (req, func) {
+  var token = req.query.token;
+  var collection = req.db.collection('users');
+  return collection.findOne({token: token}, function (err, user) {
+    func(user);
   });
 };
