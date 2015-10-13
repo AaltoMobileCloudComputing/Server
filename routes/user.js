@@ -3,12 +3,6 @@ var router = express.Router();
 var util = require('../util');
 var crypto = require('crypto');
 
-// TODO: Implement
-function parseQueryParams(req) {
-  return {
-
-  };
-}
 
 function createUserFromRequest(req) {
   return {
@@ -19,7 +13,6 @@ function createUserFromRequest(req) {
     password: req.body.password
   }
 }
-
 
 /*
  * GET
@@ -57,7 +50,7 @@ router.get('/:id', function (req, res) {
       delete user.salt;
       delete user.passhash;
       res.json(user);
-    }  
+    }
   });
 });
 
@@ -129,15 +122,22 @@ router.post('/:id', function (req, res) {
 /*
  * DELETE
  */
-router.delete('/', function (req, res) {
-  // Deleting user leaves "null" references to calendars' userID arrays
-  var token = req.query.token;
-  var users = req.db.collection('users');
-  users.findOneAndDelete({token: token}, function (err, result) {
-    if (result === null || result.value === null) {
-      return res.err400('Not valid token');
-    } else {
-      res.json(result);
+router.delete('/:id', function (req, res) {
+  var id = req.params.id;
+  util.auth(req, function (user) {
+    if (user == null || id != user._id) {
+      return res.err400("Not valid token");
+    }
+    else {
+      var users = req.db.collection('users');
+      users.findOneAndDelete({_id: user._id}, function (err, result) {
+        if (result == null || result.value == null) {
+          return res.err400('Not valid token');
+        }
+        else {
+          res.json(result);
+        }
+      });
     }
   });
 });
