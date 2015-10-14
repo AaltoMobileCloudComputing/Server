@@ -67,7 +67,7 @@ router.post('/:id', function (req, res) {
   var id = util.convertID(req.params.id);
 
   if (req.body.title) calendarUpdate.title = req.body.title;
-  if (req.body.description) calendarUpdate.title = req.body.description;
+  if (req.body.description) calendarUpdate.description = req.body.description;
 
   util.updateOne(id, req.db.collection('calendars'), calendarUpdate).then(
     function(updated) {
@@ -78,6 +78,36 @@ router.post('/:id', function (req, res) {
       res.err400(error);
     }
   )
+});
+
+router.post('/share/:id/:userid', function (req, res) {
+  // TODO need to decide that is this sesiple or should post json be used
+  util.auth(req, function(user){
+    if (user == null) {
+      return res.err400("Unvalid token");
+      console.log("Hello");
+    }
+    var id = req.params.id;
+    var userID = req.params.userid;
+
+    if (userID == user._id) {
+      return res.err400("User already has access to calendar");
+    }
+    else if (util.idInList(id, user.calendars)) {
+      var collection = req.db.collection('users');
+      collection.update({_id: util.convertID(userID)}, {$addToSet: {calendars: util.convertID(id)}}, function (err, result) {
+        if (result == null) {
+          return res.err400('Unvalid user');
+        }
+        else {
+          res.json(result);
+        }
+      });
+    }
+    else {
+      return res.err400("Unvalid token");
+    }
+  });
 });
 
 /*

@@ -90,3 +90,10 @@ exports.auth = function (req, func) {
     func(user);
   });
 };
+
+exports.idInList = function (id, list) {
+  for (var idInList in list) {
+    if (id == list[idInList]) return true;
+  }
+  return false;
+};
