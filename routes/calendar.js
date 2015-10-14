@@ -83,16 +83,12 @@ router.post('/:id', function (req, res) {
 router.post('/share/:id/:userid', function (req, res) {
   // TODO need to decide that is this sesiple or should post json be used
   util.auth(req, function(user){
-    if (user == null) {
-      return res.err400("Unvalid token");
-      console.log("Hello");
-    }
+    if (user == null) return res.err400("Unvalid token");
+
     var id = req.params.id;
     var userID = req.params.userid;
 
-    if (userID == user._id) {
-      return res.err400("User already has access to calendar");
-    }
+    if (userID == user._id) return res.err400("User already has access to calendar");
     else if (util.idInList(id, user.calendars)) {
       var collection = req.db.collection('users');
       collection.update({_id: util.convertID(userID)}, {$addToSet: {calendars: util.convertID(id)}}, function (err, result) {
@@ -104,9 +100,7 @@ router.post('/share/:id/:userid', function (req, res) {
         }
       });
     }
-    else {
-      return res.err400("Unvalid token");
-    }
+    else return res.err400("Unvalid token");
   });
 });
 
