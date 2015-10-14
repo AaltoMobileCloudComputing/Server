@@ -34,6 +34,7 @@ function parseQueryParams(req) {
  * GET
  */
 router.get('/', function (req, res) {
+  // TODO add auth()
   var collection = req.db.collection('events');
   var query = parseQueryParams(req);
   collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, events) {
@@ -42,6 +43,7 @@ router.get('/', function (req, res) {
 });
 
 router.get('/:id', function (req, res) {
+  // TODO add auth()
   var id = util.convertID(req.params.id);
   var collection = req.db.collection('events');
   util.findOne(id, collection).then(function (event) {
@@ -90,6 +92,7 @@ router.post('/', function (req, res) {
 });
 
 router.post('/:id', function (req, res) {
+  // TODO add auth()
   var eventUpdate = {};
   var id = util.convertID(req.params.id);
   var events = req.db.collection('events');
@@ -127,6 +130,7 @@ router.post('/:id', function (req, res) {
  * DELETE
  */
 router.delete('/:id', function (req, res) {
+  // TODO add auth()
   var id = util.convertID(req.params.id);
   var events = req.db.collection('events');
   util.deleteOne(id, events).then(
