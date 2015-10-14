@@ -4,7 +4,30 @@ var util = require('../util');
 
 // TODO: Implement
 function parseQueryParams(req) {
-  return {};
+  var query = {}
+  if (req.query.start && req.query.end) {
+    var start = util.convertTime(req.query.start);
+    var end = util.convertTime(req.query.end);
+    query.$or = [];
+    query.$or.push({start: {$gte: start, $lt: end}});
+    query.$or.push({end: {$gte: start, $lt: end}});
+  }
+  else if (req.query.start) {
+    var start = util.convertTime(req.query.start);
+    query.$or = [];
+    query.$or.push({start: {$gte: start}});
+    query.$or.push({end: {$gte: start}});
+  }
+  else if (req.query.end) {
+    var end = util.convertTime(req.query.end);
+    query.$or = [];
+    query.$or.push({start: {$lt: end}});
+    query.$or.push({end: {$lt: end}});
+  }
+  if (req.query.search) {
+    query.title = {$regex : ".*" + req.query.search + ".*"};
+  }
+  return query;
 }
 
 /*
@@ -35,31 +58,35 @@ router.get('/:id', function (req, res) {
  * POST
  */
 router.post('/', function (req, res) {
-  var calendarId = util.convertID(req.body.calendar);
-  util.findOne(calendarId, req.db.collection('calendars')).then(
-    function() {
-      var title = req.body.title;
-      if (!title) {
-        throw new Error('Title must be non-empty');
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Invalid token");
+    var calendarId = util.convertID(req.body.calendar);
+    if (util.idInList(calendarId, user.calendars)) return res.err400("Calendar not accessible");
+    util.findOne(calendarId, req.db.collection('calendars')).then(
+      function() {
+        var title = req.body.title;
+        if (!title) {
+          throw new Error('Title must be non-empty');
+        }
+        var times = util.convertTimes(req.body.start, req.body.end);
+        var event = {
+          calendar: calendarId,
+          title: title,
+          description: req.body.description || '',
+          start: times.start,
+          end: times.end,
+        };
+        return util.insertOne(event, req.db.collection('events')).then(function() {
+          res.json(event);
+        })
       }
-      var times = util.convertTimes(req.body.start, req.body.end);
-      var event = {
-        calendar: calendarId,
-        title: title,
-        description: req.body.description || '',
-        start: times.start,
-        end: times.end,
-      };
-      return util.insertOne(event, req.db.collection('events')).then(function() {
-        res.json(event);
-      })
-    }
-  ).catch(
-      //res.err400 <-- does not work for some reason; method gets called but no response is set
-      function (error) {
-        res.err400(error);
-      }
-  );
+    ).catch(
+        //res.err400 <-- does not work for some reason; method gets called but no response is set
+        function (error) {
+          res.err400(error);
+        }
+    );
+  });
 });
 
 router.post('/:id', function (req, res) {

@@ -25,6 +25,12 @@ exports.convertTimes = function (startStr, endStr) {
   }
 };
 
+exports.convertTime = function (time) {
+  var time = new Date(time);
+  if (!time || isNaN(time)) return null;
+  return time;
+};
+
 exports.convertID = function (idStr) {
   var ObjectID = require('mongodb').ObjectID;
   if (!ObjectID.isValid(idStr)) {
