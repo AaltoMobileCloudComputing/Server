@@ -43,7 +43,6 @@ router.post('/', function (req, res) {
         throw new Error('Title must be non-empty');
       }
       var calendar = {
-        user: userID,
         title: title,
         description: req.body.description || ''
       };
