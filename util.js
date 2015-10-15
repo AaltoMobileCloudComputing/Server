@@ -67,6 +67,17 @@ exports.findOne = function (id, collection) {
   });
 };
 
+exports.findOneWithQuery = function (query, collection) {
+  return collection.findOne(query).then(function(doc) {
+    return new Promise(function (resolve, reject) {
+      if (doc === null) {
+        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(doc);
+    });
+  });
+};
+
 exports.updateOne = function (id, collection, update) {
   return collection.findOneAndUpdate({_id: id}, update, {returnOriginal: false}).then(function(result) {
     return new Promise(function (resolve, reject) {

@@ -3,8 +3,8 @@ var router = express.Router();
 var util = require('../util');
 
 // TODO: Implement
-function parseQueryParams(req) {
-  var query = {}
+function parseQueryParams(req, user) {
+  var query = {"calendar": {$in: user.calendars}}
   if (req.query.start && req.query.end) {
     var start = util.convertTime(req.query.start);
     var end = util.convertTime(req.query.end);
@@ -34,26 +34,31 @@ function parseQueryParams(req) {
  * GET
  */
 router.get('/', function (req, res) {
-  // TODO add auth()
-  var collection = req.db.collection('events');
-  var query = parseQueryParams(req);
-  collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, events) {
-    res.json(events);
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid token");
+    var collection = req.db.collection('events');
+    var query = parseQueryParams(req, user);
+    console.log(query);
+    collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, events) {
+      res.json(events);
+    });
   });
 });
 
 router.get('/:id', function (req, res) {
-  // TODO add auth()
-  var id = util.convertID(req.params.id);
-  var collection = req.db.collection('events');
-  util.findOne(id, collection).then(function (event) {
-    res.json(event);
-  }).catch(
-    //res.err400 <-- does not work for some reason; method gets called but no response is set
-    function (error) {
-      res.err400(error);
-    }
-  );
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid toke");
+    var id = util.convertID(req.params.id);
+    var collection = req.db.collection('events');
+    util.findOneWithQuery({_id: id, calendar: {$in: user.calendars}}, collection).then(function (event) {
+      res.json(event);
+    }).catch(
+      //res.err400 <-- does not work for some reason; method gets called but no response is set
+      function (error) {
+        res.err400(error);
+      }
+    );
+  });
 });
 
 /*
