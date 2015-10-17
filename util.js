@@ -89,11 +89,33 @@ exports.updateOne = function (id, collection, update) {
   });
 };
 
+exports.updateOneWithQuery = function (query, collection, update) {
+  return collection.findOneAndUpdate(query, update, {returnOriginal: false}).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (result.value === null) {
+        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(result);
+    });
+  });
+};
+
 exports.deleteOne = function (id, collection) {
   return collection.findOneAndDelete({_id: id}).then(function(result) {
     return new Promise(function (resolve, reject) {
       if (result.value === null) {
         reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
+      }
+      resolve(result);
+    });
+  });
+};
+
+exports.deleteOneWithQuery = function (query, collection) {
+  return collection.findOneAndDelete(query).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (result.value === null) {
+        reject(Error('No Documents with query ' + query));
       }
       resolve(result);
     });

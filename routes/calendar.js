@@ -2,9 +2,8 @@ var express = require('express');
 var router = express.Router();
 var util = require('../util');
 
-// TODO: Implement
-function parseQueryParams(req) {
-  return {};
+function parseQueryParams(req, user) {
+  return {_id: {$in: user.calendars}};
 }
 
 /*
@@ -12,25 +11,32 @@ function parseQueryParams(req) {
  */
 router.get('/', function (req, res) {
   // TODO auth()
-  var collection = req.db.collection('calendars');
-  var query = parseQueryParams(req);
-  collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, calendars) {
-    res.json(calendars);
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid token");
+    var collection = req.db.collection('calendars');
+    var query = parseQueryParams(req, user);
+    collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, calendars) {
+      res.json(calendars);
+    });
   });
+
 });
 
 router.get('/:id', function (req, res) {
-  // TODO auth()
-  var id = util.convertID(req.params.id);
-  var collection = req.db.collection('calendars');
-  util.findOne(id, collection).then(function (event) {
-    res.json(event);
-  }).catch(
-    //res.err400 <-- does not work for some reason; method gets called but no response is set
-    function (error) {
-      res.err400(error);
-    }
-  );
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid token");
+    var id = util.convertID(req.params.id);
+    var collection = req.db.collection('calendars');
+    util.findOneWithQuery({_id: id, _id: {$in: user.calendars}}, collection).then(function (event) {
+      res.json(event);
+    }).catch(
+      //res.err400 <-- does not work for some reason; method gets called but no response is set
+      function (error) {
+        res.err400(error);
+      }
+    );
+  });
+
 });
 
 /*
@@ -39,6 +45,7 @@ router.get('/:id', function (req, res) {
 router.post('/', function (req, res) {
   //var userID = util.convertID(req.body.user); // TODO: userID could be inferred from API token
   util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid token");
     util.findOne(user._id, req.db.collection('users')).then(
       function() {
         var title = req.body.title;
@@ -85,22 +92,24 @@ router.post('/share', function (req, res) {
 });
 
 router.post('/:id', function (req, res) {
-  // TODO auth()
-  var calendarUpdate = {};
-  var id = util.convertID(req.params.id);
+  util.auth(req, function (user) {
+    if (user == null) return res.err400("Unvalid token");
+    var calendarUpdate = {};
+    var id = util.convertID(req.params.id);
 
-  if (req.body.title) calendarUpdate.title = req.body.title;
-  if (req.body.description) calendarUpdate.description = req.body.description;
+    if (req.body.title) calendarUpdate.title = req.body.title;
+    if (req.body.description) calendarUpdate.description = req.body.description;
 
-  util.updateOne(id, req.db.collection('calendars'), calendarUpdate).then(
-    function(updated) {
-      return res.json(updated.value);
-    }
-  ).catch(
-    function (error) {
-      res.err400(error);
-    }
-  )
+    util.updateOneWithQuery({_id: id, _id: {$in: user.calendars}}, req.db.collection('calendars'), calendarUpdate).then(
+      function(updated) {
+        return res.json(updated.value);
+      }
+    ).catch(
+      function (error) {
+        res.err400(error);
+      }
+    )
+  });
 });
 
 
@@ -109,20 +118,23 @@ router.post('/:id', function (req, res) {
  * DELETE
  */
 router.delete('/:id', function (req, res) {
-  // TODO auth()
-  var id = util.convertID(req.params.id);
-  var calendars = req.db.collection('calendars');
-  util.deleteOne(id, calendars).then(
-    function() {
-      req.db.collection('events').deleteMany({calendar: id}, function(err, result) {
-        res.json(result);
-      });
-    }
-  ).catch(
-    function (error) {
-      res.err400(error);
-    }
-  );
+  util.auth(req, function(user){
+    if (user == null) return res.err400("Unvalid token");
+    var id = util.convertID(req.params.id);
+    var calendars = req.db.collection('calendars');
+    util.deleteOneWithQuery({_id: id, _id: {$in: user.calendars}}, calendars).then(
+      function() {
+        req.db.collection('events').deleteMany({calendar: id, calendar: {$in: user.calendars}}, function(err, result) {
+          res.json(result);
+        });
+      }
+    ).catch(
+      function (error) {
+        res.err400(error);
+      }
+    );
+  });
+
 });
 
 module.exports = router;
