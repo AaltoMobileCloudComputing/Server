@@ -36,11 +36,11 @@ Also, mongodb needs to be started before starting the service. This can be done 
 This setup is for Ubuntu 14.04
 
 1. Clone the git repo/copy files into `/opt/mcc` and run `npm install` there
-2. Copy `mcc.conf` to `/etc/init.d` with name `mcc` (`mv mcc.conf /etc/init.d/mcc`)
-3. Start mongo (`service mongodb start`), open mongo shell (`mongo`) and change database to mcc (`use mcc`)
+2. Copy `mcc.conf` to `/etc/init`
+3. Start mongo (`sudo service mongodb start`), open mongo shell (`mongo`) and change database to mcc (`use mcc`)
 4. Start service with `sudo service mcc start` (note: mongo needs to be always started first)
 
-After initial setup updates can be done simply using `git pull` and `service mcc restart`.
+After initial setup updates can be done simply using `git pull` and `sudo service mcc restart`.
 
 ## API
 
