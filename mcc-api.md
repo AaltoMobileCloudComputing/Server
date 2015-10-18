@@ -32,8 +32,8 @@ API URLs are:
     /user
     /event
     /calendar
-    /share
-    
+    /calendar/share
+
 Responses have always content type application/json. Typically the response is the requested document or an array of documents or, when creating or updating documents, the created/updated document (i.e. response reflects what was inserted into DB). If an error occurs the response is a JSON object with single field called `error`, e.g.:
 
     {
@@ -50,7 +50,7 @@ If object ID is included in URL (e.g. `GET /event/123edf`) then only that specif
 
 ## POST
 POSTing to a collection creates a new document of that type. All required fields specified in the section above or otherwise an error is returned. If document was created successfully then that same document is returned with `_id` added.
- 
+
 Updating documents is done by POSTing to a specific document URL. When updating only the fields that are present in the request are updated i.e. request below would only update event tile.
 
     POST /event/123edf
@@ -58,7 +58,7 @@ Updating documents is done by POSTing to a specific document URL. When updating 
         "title": "Updated event title"
     }
 
-Sharing calendars is done by POSTing to `/share` a request with following format:
+Sharing calendars is done by POSTing to `/calendar/share` a request with following format:
 
     {
         "id": "<calendar-id-to-share",
@@ -66,4 +66,4 @@ Sharing calendars is done by POSTing to `/share` a request with following format
     }
 
 ## DELETE
-DELETEing a document simply deletes the object. Collections can't be deleted.
+Deleting a document simply deletes the object. Collections can't be deleted.
