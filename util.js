@@ -40,7 +40,6 @@ exports.convertID = function (idStr) {
   }
 };
 
-// TODO: Implement
 exports.generateApiToken = function () {
   /* This is very simple solution */
   var crypto = require('crypto');

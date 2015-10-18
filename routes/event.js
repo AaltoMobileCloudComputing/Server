@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var util = require('../util');
 
-// TODO: Implement
 function parseQueryParams(req, user) {
   var query = {"calendar": {$in: user.calendars}}
   if (req.query.start && req.query.end) {
@@ -35,7 +34,7 @@ function parseQueryParams(req, user) {
  */
 router.get('/', function (req, res) {
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var collection = req.db.collection('events');
     var query = parseQueryParams(req, user);
     console.log(query);
@@ -47,13 +46,12 @@ router.get('/', function (req, res) {
 
 router.get('/:id', function (req, res) {
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid toke");
+    if (user == null) return res.err400("Invalid token");
     var id = util.convertID(req.params.id);
     var collection = req.db.collection('events');
     util.findOneWithQuery({_id: id, calendar: {$in: user.calendars}}, collection).then(function (event) {
       res.json(event);
     }).catch(
-      //res.err400 <-- does not work for some reason; method gets called but no response is set
       function (error) {
         res.err400(error);
       }
@@ -88,7 +86,6 @@ router.post('/', function (req, res) {
         })
       }
     ).catch(
-        //res.err400 <-- does not work for some reason; method gets called but no response is set
         function (error) {
           res.err400(error);
         }
@@ -98,8 +95,7 @@ router.post('/', function (req, res) {
 
 router.post('/:id', function (req, res) {
   util.auth(req, function(user){
-    if (user == null) return res.err400("Unvalid token");
-    //
+    if (user == null) return res.err400("Invalid token");
     var eventUpdate = {};
     var id = util.convertID(req.params.id);
     var events = req.db.collection('events');
@@ -126,7 +122,6 @@ router.post('/:id', function (req, res) {
         });
       }
     ).catch(
-      //res.err400 <-- does not work for some reason; method gets called but no response is set
       function (error) {
         res.err400(error);
       }
@@ -143,7 +138,7 @@ router.post('/:id', function (req, res) {
  */
 router.delete('/:id', function (req, res) {
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var id = util.convertID(req.params.id);
     var events = req.db.collection('events');
     util.deleteOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events).then(

@@ -44,7 +44,7 @@ router.get('/:id', function (req, res) {
   var id = req.params.id;
   util.auth(req, function (user) {
     if (user == null || id != user._id) {
-      return res.err400("Not valid token");
+      return res.err400("Invalid token");
     }
     else {
       delete user.salt;
@@ -93,7 +93,7 @@ router.post('/:id', function (req, res) {
   var id = req.params.id;
   util.auth(req, function (user) {
     if (user == null || id != user._id) {
-      return res.err400("Not valid token");
+      return res.err400("Invalid token");
     } else {
       for (prop in req.body) {
         if (prop == "salt" || prop == "passhash" || prop == "username" || prop == "_id") {
@@ -110,7 +110,7 @@ router.post('/:id', function (req, res) {
       collection.update({_id: user._id}, user, function (err, result) {
         if (result == null) {
           console.log(result);
-          return res.err400('user not found');
+          return res.err400('User not found');
         } else {
           res.json(result);
         }
@@ -126,13 +126,13 @@ router.delete('/:id', function (req, res) {
   var id = req.params.id;
   util.auth(req, function (user) {
     if (user == null || id != user._id) {
-      return res.err400("Not valid token");
+      return res.err400("Invalid token");
     }
     else {
       var users = req.db.collection('users');
       users.findOneAndDelete({_id: user._id}, function (err, result) {
         if (result == null || result.value == null) {
-          return res.err400('Not valid token');
+          return res.err400('Invalid token');
         }
         else {
           res.json(result);

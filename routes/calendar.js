@@ -10,9 +10,8 @@ function parseQueryParams(req, user) {
  * GET
  */
 router.get('/', function (req, res) {
-  // TODO auth()
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var collection = req.db.collection('calendars');
     var query = parseQueryParams(req, user);
     collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, calendars) {
@@ -24,13 +23,12 @@ router.get('/', function (req, res) {
 
 router.get('/:id', function (req, res) {
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var id = util.convertID(req.params.id);
     var collection = req.db.collection('calendars');
     util.findOneWithQuery({_id: id, _id: {$in: user.calendars}}, collection).then(function (event) {
       res.json(event);
     }).catch(
-      //res.err400 <-- does not work for some reason; method gets called but no response is set
       function (error) {
         res.err400(error);
       }
@@ -43,9 +41,8 @@ router.get('/:id', function (req, res) {
  * POST
  */
 router.post('/', function (req, res) {
-  //var userID = util.convertID(req.body.user); // TODO: userID could be inferred from API token
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     util.findOne(user._id, req.db.collection('users')).then(
       function() {
         var title = req.body.title;
@@ -64,7 +61,6 @@ router.post('/', function (req, res) {
         });
       }
     ).catch(
-      //res.err400 <-- does not work for some reason; method gets called but no response is set
       function (error) {
         res.err400(error);
       }
@@ -74,7 +70,7 @@ router.post('/', function (req, res) {
 
 router.post('/share', function (req, res) {
   util.auth(req, function(user){
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     if (!req.body.id || !req.body.userid) return res.err400("Calendar id or user id missing");
     var id = req.body.id;
     var userID = req.body.userid;
@@ -83,17 +79,17 @@ router.post('/share', function (req, res) {
     else if (util.idInList(id, user.calendars)) {
       var collection = req.db.collection('users');
       collection.update({_id: util.convertID(userID)}, {$addToSet: {calendars: util.convertID(id)}}, function (err, result) {
-        if (result == null) return res.err400('Unvalid user');
+        if (result == null) return res.err400('Invalid user');
         else res.json(result);
       });
     }
-    else return res.err400("Unvalid token");
+    else return res.err400("Invalid token");
   });
 });
 
 router.post('/:id', function (req, res) {
   util.auth(req, function (user) {
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var calendarUpdate = {};
     var id = util.convertID(req.params.id);
 
@@ -119,7 +115,7 @@ router.post('/:id', function (req, res) {
  */
 router.delete('/:id', function (req, res) {
   util.auth(req, function(user){
-    if (user == null) return res.err400("Unvalid token");
+    if (user == null) return res.err400("Invalid token");
     var id = util.convertID(req.params.id);
     var calendars = req.db.collection('calendars');
     util.deleteOneWithQuery({_id: id, _id: {$in: user.calendars}}, calendars).then(
