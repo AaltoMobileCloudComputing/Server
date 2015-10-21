@@ -9,7 +9,9 @@ var routes = require('./routes/index');
 var user = require('./routes/user');
 var event = require('./routes/event');
 var calendar = require('./routes/calendar');
+var sync = require('./routes/sync');
 var mongo = require('mongodb').MongoClient;
+var fs = require('fs');
 
 var app = express();
 
@@ -33,7 +35,18 @@ mongo.connect(url, function (err, connectedDb) {
 // Make DB accessible to router
 app.use(function (req, res, next) {
   req.db = db;
-  //res.err400 = require('./util').err400;
+  next();
+});
+
+// Load client secrets from file and make accessible to router
+app.use(function (req, res, next) {
+  fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+    if (err) {
+      console.log('Error loading client secret file: ' + err);
+      return;
+    }
+    req.clientSecrets = JSON.parse(content);
+  });
   next();
 });
 
@@ -53,6 +66,7 @@ app.use('/', routes);
 app.use('/user', user);
 app.use('/event', event);
 app.use('/calendar', calendar);
+app.use('/sync', sync);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
