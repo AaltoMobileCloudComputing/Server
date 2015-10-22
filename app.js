@@ -19,6 +19,15 @@ var app = express();
 express.response.err400 = require('./util').err400;
 require('mongodb').Cursor.prototype.paginate = require('./util').paginate;
 
+var clientSecrets;
+fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+  if (err) {
+    console.log('Error loading client secret file: ' + err);
+    return;
+  }
+  clientSecrets = JSON.parse(content);
+});
+
 // Set up DB connection
 var url = 'mongodb://localhost:27017/mcc';
 var db;
@@ -40,13 +49,7 @@ app.use(function (req, res, next) {
 
 // Load client secrets from file and make accessible to router
 app.use(function (req, res, next) {
-  fs.readFile('client_secret.json', function processClientSecrets(err, content) {
-    if (err) {
-      console.log('Error loading client secret file: ' + err);
-      return;
-    }
-    req.clientSecrets = JSON.parse(content);
-  });
+  req.clientSecrets = clientSecrets;
   next();
 });
 

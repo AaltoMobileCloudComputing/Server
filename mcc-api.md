@@ -24,7 +24,12 @@ Fields marked with * are mandatory (i.e. they need to be specified when creating
     email : String *
     password : String *
     token : String
-
+    
+    -- NEW --
+    tokens :
+        access_token : String
+        refresh_token : String
+    synctoken : String
 
 # API
 API URLs are:

@@ -117,7 +117,7 @@ router.post('/:id', function (req, res) {
       }
     ).then(
       function() {
-        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, {$set: eventUpdate}).then(function (updated) {
+        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, eventUpdate).then(function (updated) {
           return res.json(updated.value);
         });
       }

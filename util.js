@@ -99,6 +99,17 @@ exports.updateOneWithQuery = function (query, collection, update) {
   });
 };
 
+exports.upsertOne = function (id, collection, update) {
+  return collection.findOneAndUpdate({_id: id}, update, {returnOriginal: false, upsert: true}).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (!(result.nMatched || result.nUpserted || result.nModified)) {
+        reject(Error('Upserting document with ID ' + id + ' in ' + collection.collectionName + ' failed'));
+      }
+      resolve(result);
+    });
+  });
+};
+
 exports.deleteOne = function (id, collection) {
   return collection.findOneAndDelete({_id: id}).then(function(result) {
     return new Promise(function (resolve, reject) {
