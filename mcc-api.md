@@ -3,7 +3,7 @@
 Fields marked with * are mandatory (i.e. they need to be specified when creating resource). IDs (`_id`) are created by Mongo and included in response when resource is created. Supported date formats are same as what Javascript Date.parse() supports (e.g. `2015-11-12T13:14:15`). Also start time must be on or before end time.
 
 ## Events
-    _id : ObjectID
+    _id : ObjectID (String if synced from GCal)
     calendar : ObjectID *
     title : String *
     description : String
