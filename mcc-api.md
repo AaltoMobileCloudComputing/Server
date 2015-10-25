@@ -30,6 +30,13 @@ Fields marked with * are mandatory (i.e. they need to be specified when creating
         access_token : String
         refresh_token : String
     synctoken : String
+    synccalendar : ObjectID
+    
+## Changes
+    _id : ObjectID
+    user : ObjectID
+    event : ObjectID
+    type : String ('insert', 'update' or 'delete')
 
 # API
 API URLs are:

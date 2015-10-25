@@ -41,14 +41,9 @@ mongo.connect(url, function (err, connectedDb) {
   db = connectedDb;
 });
 
-// Make DB accessible to router
+// Make DB and client secrets accessible to router
 app.use(function (req, res, next) {
   req.db = db;
-  next();
-});
-
-// Load client secrets from file and make accessible to router
-app.use(function (req, res, next) {
   req.clientSecrets = clientSecrets;
   next();
 });

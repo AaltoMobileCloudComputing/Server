@@ -29,6 +29,15 @@ function parseQueryParams(req, user) {
   return query;
 }
 
+function insertChange(userId, eventId, type, db) {
+  console.log('CHANGE ' +
+      'userId: ' + userId +
+      ', eventId: ' + eventId +
+      ', type: ' + type
+  );
+  return utils.insertOne({user: util.convertID(userId), event: util.convertID(eventId), type: type}, db.collection('changes'))
+}
+
 /*
  * GET
  */
@@ -82,6 +91,13 @@ router.post('/', function (req, res) {
           end: times.end,
         };
         return util.insertOne(event, req.db.collection('events')).then(function() {
+          if (calendarId === user.synccalendar) {
+            return insertChange(user._id, event._id, 'insert', req.db).then(
+                function() {
+                  res.json(event)
+                }
+            );
+          }
           res.json(event);
         })
       }
@@ -117,20 +133,25 @@ router.post('/:id', function (req, res) {
       }
     ).then(
       function() {
-        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, eventUpdate).then(function (updated) {
-          return res.json(updated.value);
-        });
+        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, eventUpdate).then(
+            function (updated) {
+              if (updated.value.calendar === user.synccalendar) {
+                return insertChange(user._id, id, 'update', req.db).then(
+                    function() {
+                      res.json(updated.value)
+                    }
+                );
+              }
+              return res.json(updated.value);
+            }
+        );
       }
     ).catch(
       function (error) {
         res.err400(error);
       }
     );
-    //
-
   });
-
-
 });
 
 /*
@@ -143,7 +164,15 @@ router.delete('/:id', function (req, res) {
     var events = req.db.collection('events');
     util.deleteOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events).then(
         function (result) {
-          res.json(result.value);
+          if (result.value.calendar === user.synccalendar) {
+            return insertChange(user._id, id, 'delete', req.db).then(
+                function() {
+                  res.json(result.value)
+                }
+            );
+          } else {
+            return res.json(result.value);
+          }
         }
     ).catch(
         function (error) {
