@@ -5,8 +5,9 @@ var util = require('../util');
 var router = express.Router();
 
 /**
- * Get oauth2client based on client_secret.json
+ * HELPERS
  */
+
 function getOauth2Client(credentials) {
   var clientSecret = credentials.installed.client_secret;
   var clientId = credentials.installed.client_id;
@@ -17,7 +18,7 @@ function getOauth2Client(credentials) {
 
 function convertEventGoogleToMcc(event) {
   return {
-    _id: event.id,
+    _id: util.convertStrToId(event.id),
     title: event.summary,
     description: event.description,
     start: event.start.dateTime || event.start.date,
@@ -27,7 +28,7 @@ function convertEventGoogleToMcc(event) {
 
 function convertEventMccToGoogle(event) {
   return {
-    id: event.id,
+    id: util.convertIdToStr(event._id),
     summary: event.title,
     description: event.description,
     start: {dateTime: event.start.toISOString()},
@@ -35,61 +36,86 @@ function convertEventMccToGoogle(event) {
   }
 }
 
+function getSyncReq(user, clientSecrets) {
+  var oauth2Client = getOauth2Client(clientSecrets);
+
+  if (!user.tokens) { // Need to do initial authorization if tokens are not present
+    var authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/calendar']
+    });
+    return res.render('sync-auth', {authUrl: authUrl});
+  }
+  oauth2Client.credentials = user.tokens;
+
+  var syncReq = {
+    auth: oauth2Client,
+    calendarId: 'primary' // TODO: Only primary calendar support (at least for now)
+  };
+  if (user.nextsynctoken) { // Incremental sync
+    syncReq.syncToken = user.nextsynctoken;
+  } else { // Full sync (all events starting from year ago)
+    var d = new Date();
+    d.setYear(d.getFullYear() - 1);
+    syncReq.timeMin = d.toISOString();
+  }
+
+  return syncReq;
+}
+
+function getEventApiPromise(syncReq, type) {
+  return new Promise(function (resolve, reject) {
+    google.calendar('v3').events[type](syncReq, function(err, event) {
+      if(err !== null) return reject(err);
+      resolve(event);
+    });
+  })
+}
+
+/**
+ * SYNC
+ */
+
+
 function synchronizeMccToGoogle(user, db, syncReq) {
-  var calendar = google.calendar('v3');
   var eventsCollection = db.collection('events');
   var changesCollection = db.collection('changes');
 
   return changesCollection.find({user: user._id}).toArray().then(
       function (changes) {
+        var syncResult = {
+          promises: [],
+          upserted: 0,
+          deleted: 0
+        };
         changes.forEach(function (change) {
+          var p;
+          syncReq.eventId = util.convertIdToStr(change.event);
           switch (change.type) {
             case 'insert':
-              util.findOne(change.event, eventsCollection).then(
-                  function(event) {
-                    syncReq.resource = convertEventMccToGoogle(event);
-                    calendar.events.insert(syncReq, function(err, event) {
-                      if (err) {
-                        console.log('There was an error contacting the Calendar service: ' + err);
-                      } else {
-                        console.log('Event created: ' + event.htmlLink);
-                      }
-                    });
-                  }
-              );
-              break;
             case 'update':
-              util.findOne(change.event, eventsCollection).then(
+              p = util.findOne(change.event, eventsCollection).then(
                   function(event) {
                     syncReq.resource = convertEventMccToGoogle(event);
-                    calendar.events.update(syncReq, function(err, event) {
-                      if (err) {
-                        console.log('There was an error contacting the Calendar service: ' + err);
-                      } else {
-                        console.log('Event updated: ' + event.htmlLink);
-                      }
-                    });
+                    return getEventApiPromise(syncReq, change.type);
                   }
               );
+              syncResult.upserted++;
               break;
             case 'delete':
-                syncReq.eventId = change.event;
-                calendar.events.delete(syncReq, function(err, event) {
-                  if (err) {
-                    console.log('There was an error contacting the Calendar service: ' + err);
-                  } else {
-                    console.log('Event deleted: ' + event.htmlLink);
-                  }
-                });
+              p = getEventApiPromise(syncReq, 'delete');
+              syncResult.deleted++;
               break;
             default:
               console.log('Invalid change type: ' + change.type);
           }
-        })
-      }
-  ).then(
-      function() {
-        return changesCollection.deleteMany({user: user._id});
+          syncResult.promises.push(p.then(
+              function () {
+                return util.deleteOne(change._id, changesCollection);
+              }
+          ))
+        });
+        return syncResult;
       }
   );
 }
@@ -98,77 +124,83 @@ function synchronizeGoogleToMcc(user, db, syncReq) {
   var calendar = google.calendar('v3');
   var eventsCollection = db.collection('events');
 
-  calendar.events.list(syncReq, function (err, response) {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return;
-    }
+  return new Promise(function (resolve, reject) {
+    calendar.events.list(syncReq, function (err, response) {
+      if (err !== null) return reject(err);
 
-    var events = response.items;
-    var promises = [];
-    if (events.length > 0) {
-      console.log('Syncing ' + events.length + ' events');
-      events.forEach(function (event) {
-        var converted = convertEventGoogleToMcc(event);
-        converted.calendar = user.synccalendar;
-        promises.push(util.upsertOne(util.convertID(converted._id), eventsCollection, converted));
-      });
-    }
+      var events = response.items;
+      var syncResult = {
+        promises: [],
+        upserted: 0,
+        deleted: 0
+      };
+      if (events != null && events.length > 0) {
+        events.forEach(function (event) {
+          var convertedId = util.convertStrToId(event.id);
+          if (event.status !== 'cancelled') {
+            var convertedEvent = convertEventGoogleToMcc(event);
+            convertedEvent.calendar = user.synccalendar;
+            syncResult.promises.push(util.upsertOne(convertedId, eventsCollection, convertedEvent));
+            syncResult.upserted++;
+          } else {
+            syncResult.promises.push(util.deleteOneIfExists(convertedId, eventsCollection));
+            syncResult.deleted++;
+          }
+        });
+      }
 
-    if (response.nextPageToken) {
-      syncReq.pageToken = response.nextPageToken;
-      promises.concat(synchronizeGoogleToMcc(user, collection, syncReq));
-    } else if (response.nextSyncToken) {
-      promises.push(util.updateOne(user._id, db.collection('users'), {$set: {synctoken: response.nextSyncToken}}));
-    }
-    return promises;
+      if (response.nextPageToken) {
+        syncReq.pageToken = response.nextPageToken;
+        syncResult.promises.concat(synchronizeGoogleToMcc(user, collection, syncReq));
+      } else if (response.nextSyncToken) {
+        syncResult.promises.push(util.updateOne(user._id, db.collection('users'), {$set: {nextsynctoken: response.nextSyncToken}}));
+      }
+      resolve(syncResult);
+    });
   });
 }
+
+/**
+ * GET
+ */
 
 router.get('/', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
-    var oauth2Client = getOauth2Client(req.clientSecrets);
-
-    if (!user.tokens) { // Need to do initial authorization if tokens are not present
-      var authUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/calendar']
-      });
-      return res.render('sync-auth', {authUrl: authUrl});
-    }
-    oauth2Client.credentials = user.tokens;
-
-    var syncReq = {
-      auth: oauth2Client,
-      calendarId: 'primary' // TODO: Only primary calendar support (at least for now)
-    };
-    if (user.synctoken) { // Incremental sync
-      syncReq.syncToken = user.synctoken;
-    } else { // Full sync (all events starting from year ago)
-      var d = new Date();
-      d.setYear(d.getFullYear() - 1);
-      syncReq.timeMin = d.toISOString();
-    }
+    var syncReq = getSyncReq(user, req.clientSecrets);
+    var syncResult = {};
 
     synchronizeMccToGoogle(user, req.db, syncReq).then(
-        function() {
-          return Promise.all(synchronizeGoogleToMcc(user, req.db, syncReq));
+        function(result) {
+          syncResult.toGoogle = result;
+          return Promise.all(result.promises);
         }
     ).then(
         function() {
-          return res.json({result: 'Sync OK!'})
-    }).catch(
+          return synchronizeGoogleToMcc(user, req.db, syncReq);
+        }
+    ).then(
+        function(result) {
+          syncResult.toMcc = result;
+          return Promise.all(result.promises);
+        }
+    ).then(
+        function() {
+          delete syncResult.toGoogle.promises;
+          delete syncResult.toMcc.promises;
+          return res.json({result: syncResult})
+        }
+    ).catch(
         function(error) {
-          // FIXME: For some reason error is returned although syncing actually works
-          if (error.message === 'Cannot read property \'Symbol(Symbol.iterator)\' of undefined') {
-            return res.json({result: 'Sync OK!'})
-          } else {
-            return res.err400(error);
-          }
-    });
+          return res.err400(error);
+        }
+    );
   });
 });
+
+/**
+ * POST
+ */
 
 router.post('/', function (req, res) {
   util.auth(req, function (user) {

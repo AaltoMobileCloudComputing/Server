@@ -30,12 +30,7 @@ function parseQueryParams(req, user) {
 }
 
 function insertChange(userId, eventId, type, db) {
-  console.log('CHANGE ' +
-      'userId: ' + userId +
-      ', eventId: ' + eventId +
-      ', type: ' + type
-  );
-  return utils.insertOne({user: util.convertID(userId), event: util.convertID(eventId), type: type}, db.collection('changes'))
+  return util.insertOne({user: util.convertStrToId(userId), event: util.convertStrToId(eventId), type: type}, db.collection('changes'))
 }
 
 /*
@@ -46,7 +41,6 @@ router.get('/', function (req, res) {
     if (user == null) return res.err400("Invalid token");
     var collection = req.db.collection('events');
     var query = parseQueryParams(req, user);
-    console.log(query);
     collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, events) {
       res.json(events);
     });
@@ -56,7 +50,7 @@ router.get('/', function (req, res) {
 router.get('/:id', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
-    var id = util.convertID(req.params.id);
+    var id = util.convertStrToId(req.params.id);
     var collection = req.db.collection('events');
     util.findOneWithQuery({_id: id, calendar: {$in: user.calendars}}, collection).then(function (event) {
       res.json(event);
@@ -74,7 +68,7 @@ router.get('/:id', function (req, res) {
 router.post('/', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
-    var calendarId = util.convertID(req.body.calendar);
+    var calendarId = util.convertStrToId(req.body.calendar);
     if (util.idInList(calendarId, user.calendars)) return res.err400("Calendar not accessible");
     util.findOne(calendarId, req.db.collection('calendars')).then(
       function() {
@@ -88,10 +82,10 @@ router.post('/', function (req, res) {
           title: title,
           description: req.body.description || '',
           start: times.start,
-          end: times.end,
+          end: times.end
         };
         return util.insertOne(event, req.db.collection('events')).then(function() {
-          if (calendarId === user.synccalendar) {
+          if (calendarId.equals(user.synccalendar)) {
             return insertChange(user._id, event._id, 'insert', req.db).then(
                 function() {
                   res.json(event)
@@ -113,7 +107,7 @@ router.post('/:id', function (req, res) {
   util.auth(req, function(user){
     if (user == null) return res.err400("Invalid token");
     var eventUpdate = {};
-    var id = util.convertID(req.params.id);
+    var id = util.convertStrToId(req.params.id);
     var events = req.db.collection('events');
     util.findOne(id, events).then(
       function (eventOriginal) {
@@ -124,7 +118,7 @@ router.post('/:id', function (req, res) {
         eventUpdate.start = times.start;
         eventUpdate.end = times.end;
         if (req.body.calendar) {
-          var calendarId = util.convertID(req.body.calendar);
+          var calendarId = util.convertStrToId(req.body.calendar);
           var calendars = req.db.collection('calendars');
           return util.findOne(calendarId, calendars).then(function () {
             eventUpdate.calendar = calendarId;
@@ -133,9 +127,9 @@ router.post('/:id', function (req, res) {
       }
     ).then(
       function() {
-        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, eventUpdate).then(
+        return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, {$set: eventUpdate}).then(
             function (updated) {
-              if (updated.value.calendar === user.synccalendar) {
+              if (updated.value.calendar.equals(user.synccalendar)) {
                 return insertChange(user._id, id, 'update', req.db).then(
                     function() {
                       res.json(updated.value)
@@ -160,11 +154,11 @@ router.post('/:id', function (req, res) {
 router.delete('/:id', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
-    var id = util.convertID(req.params.id);
+    var id = util.convertStrToId(req.params.id);
     var events = req.db.collection('events');
     util.deleteOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events).then(
         function (result) {
-          if (result.value.calendar === user.synccalendar) {
+          if (result.value.calendar.equals(user.synccalendar)) {
             return insertChange(user._id, id, 'delete', req.db).then(
                 function() {
                   res.json(result.value)

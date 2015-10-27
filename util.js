@@ -20,7 +20,7 @@ exports.convertTimes = function (startStr, endStr) {
   } else {
     return {
       start: start,
-      end: end,
+      end: end
     }
   }
 };
@@ -31,12 +31,20 @@ exports.convertTime = function (time) {
   return time;
 };
 
-exports.convertID = function (idStr) {
+exports.convertStrToId = function (idStr) {
   var ObjectID = require('mongodb').ObjectID;
-  if (!ObjectID.isValid(idStr)) {
-    return idStr;
-  } else {
+  if (ObjectID.isValid(idStr)) {
     return ObjectID(idStr);
+  } else {
+    return idStr;
+  }
+};
+
+exports.convertIdToStr = function (id) {
+  if (typeof id === 'string') {
+    return id;
+  } else {
+    return id.toHexString();
   }
 };
 
@@ -50,20 +58,16 @@ exports.generateApiToken = function () {
 exports.insertOne = function (doc, collection) {
   return collection.insertOne(doc).then(function(doc) {
     return new Promise(function (resolve, reject) {
+      if (doc.result.ok !== 1) {
+        reject(Error('Failed to insert document'));
+      }
       resolve(doc);
     });
   });
 };
 
 exports.findOne = function (id, collection) {
-  return collection.findOne({_id: id}).then(function(doc) {
-    return new Promise(function (resolve, reject) {
-      if (doc === null) {
-        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
-      }
-      resolve(doc);
-    });
-  });
+  return exports.findOneWithQuery({_id: id}, collection);
 };
 
 exports.findOneWithQuery = function (query, collection) {
@@ -78,14 +82,7 @@ exports.findOneWithQuery = function (query, collection) {
 };
 
 exports.updateOne = function (id, collection, update) {
-  return collection.findOneAndUpdate({_id: id}, update, {returnOriginal: false}).then(function(result) {
-    return new Promise(function (resolve, reject) {
-      if (result.value === null) {
-        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
-      }
-      resolve(result);
-    });
-  });
+  return exports.updateOneWithQuery({_id: id}, collection, update);
 };
 
 exports.updateOneWithQuery = function (query, collection, update) {
@@ -102,7 +99,7 @@ exports.updateOneWithQuery = function (query, collection, update) {
 exports.upsertOne = function (id, collection, update) {
   return collection.findOneAndUpdate({_id: id}, update, {returnOriginal: false, upsert: true}).then(function(result) {
     return new Promise(function (resolve, reject) {
-      if (!(result.nMatched || result.nUpserted || result.nModified)) {
+      if (result.value === null) {
         reject(Error('Upserting document with ID ' + id + ' in ' + collection.collectionName + ' failed'));
       }
       resolve(result);
@@ -111,21 +108,25 @@ exports.upsertOne = function (id, collection, update) {
 };
 
 exports.deleteOne = function (id, collection) {
-  return collection.findOneAndDelete({_id: id}).then(function(result) {
-    return new Promise(function (resolve, reject) {
-      if (result.value === null) {
-        reject(Error('Document with ID ' + id + ' in ' + collection.collectionName + ' not found'));
-      }
-      resolve(result);
-    });
-  });
+  return exports.deleteOneWithQuery({_id: id}, collection);
 };
 
 exports.deleteOneWithQuery = function (query, collection) {
   return collection.findOneAndDelete(query).then(function(result) {
     return new Promise(function (resolve, reject) {
       if (result.value === null) {
-        reject(Error('No Documents with query ' + query));
+        reject(Error('No document to delete'));
+      }
+      resolve(result);
+    });
+  });
+};
+
+exports.deleteOneIfExists = function (id, collection) {
+  return collection.findOneAndDelete({_id: id}).then(function(result) {
+    return new Promise(function (resolve, reject) {
+      if (result.ok !== 1) {
+        reject(Error('Failed to delete document'));
       }
       resolve(result);
     });

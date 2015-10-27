@@ -109,7 +109,6 @@ router.post('/:id', function (req, res) {
       var collection = req.db.collection('users');
       collection.update({_id: user._id}, user, function (err, result) {
         if (result == null) {
-          console.log(result);
           return res.err400('User not found');
         } else {
           res.json(result);
