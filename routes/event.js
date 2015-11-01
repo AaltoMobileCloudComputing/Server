@@ -42,6 +42,7 @@ router.get('/', function (req, res) {
     var collection = req.db.collection('events');
     var query = parseQueryParams(req, user);
     collection.find(query).paginate(req.query.limit, req.query.offset).toArray(function (err, events) {
+      console.log(events);
       res.json(events);
     });
   });

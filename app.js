@@ -58,13 +58,13 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 app.use('/', routes);
-app.use('/user', user);
-app.use('/event', event);
-app.use('/calendar', calendar);
-app.use('/sync', sync);
+app.use('/api/user', user);
+app.use('/api/event', event);
+app.use('/api/calendar', calendar);
+app.use('/api/sync', sync);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

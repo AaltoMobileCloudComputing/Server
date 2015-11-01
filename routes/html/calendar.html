@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html ng-app="app">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>{{title}}</title>
+    <link rel="stylesheet"
+          href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/js/bootstrap.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.js"></script>
+    <script src="js/calendar.js"></script>
+  </head>
+  <body  ng-controller="simple">
+    <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
+      <div class="container">
+        <a class="navbar-brand" href="#">{{title}}</a>
+      </div>
+    </nav>
+    <div class="container">
+      <div ng-repeat="event in events">
+        <div class="card">
+          <div class="card-block">
+            <h4 class="card-title">{{event.title}}</h4>
+            <p class="card-text">{{event.description}}</p>
+            <p class="card-text">Start: {{event.start}} End: {{event.end}}</p>
+            <button class="btn btn-sm btn-primary" ng-click="openEdit($index)">Edit</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="edit">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">Modal title</h4>
+            </div>
+            <div class="modal-body">
+              <form>
+                <fieldset class="form-group">
+                  <label>Title:</label>
+                  <input class="form-control" ng-model="edit.title">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Description:</label>
+                  <input class="form-control" ng-model="edit.description">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Start:</label>
+                  <input class="form-control" ng-model="edit.start">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>End:</label>
+                  <input class="form-control" ng-model="edit.end">
+                </fieldset>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-danger" ng-click="deleteEvent()">Delete event</button>
+              <button type="button" class="btn btn-primary" ng-click="saveEvent()">Save changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+    </div>
+  </body>
+</html>
