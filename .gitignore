@@ -2,7 +2,6 @@ node_modules/
 data/
 .idea/
 .DS_Store
-client_secret.json
 mongo.log*
 start_mongo.sh
 bower_components/
