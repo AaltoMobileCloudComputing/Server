@@ -40,10 +40,11 @@ router.get('/', function (req, res) {
   });
 });
 
-router.get('/:id', function (req, res) {
-  var id = req.params.id;
+router.get('/:token', function (req, res) {
+  // quite hackish way to make util.auth() work, for real would need refactoring
+  req.query.token = req.params.token;
   util.auth(req, function (user) {
-    if (user == null || id != user._id) {
+    if (user == null) {
       return res.err400("Invalid token");
     }
     else {

@@ -16,7 +16,19 @@
   <body  ng-controller="simple">
     <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
       <div class="container">
-        <a class="navbar-brand" href="#">{{title}}</a>
+        <a class="navbar-brand" href="">{{title}}</a>
+        <ul class="nav navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link" ng-click="openAddNew()">Add new event</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav pull-right">
+          <li class="nav-item active">
+            <a class="nav-link" href="">
+              Hello, {{user.firstname + ' ' + user.lastname}}
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
     <div class="container">
@@ -39,7 +51,7 @@
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">Close</span>
               </button>
-              <h4 class="modal-title">Modal title</h4>
+              <h4 class="modal-title">Event edit: {{edit.title}}</h4>
             </div>
             <div class="modal-body">
               <form>
@@ -65,6 +77,44 @@
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-danger" ng-click="deleteEvent()">Delete event</button>
               <button type="button" class="btn btn-primary" ng-click="saveEvent()">Save changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+      <div class="modal fade" id="new">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">New event</h4>
+            </div>
+            <div class="modal-body">
+              <form>
+                <fieldset class="form-group">
+                  <label>Title:</label>
+                  <input class="form-control" ng-model="newEvent.title">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Description:</label>
+                  <input class="form-control" ng-model="newEvent.description">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Start:</label>
+                  <input class="form-control" ng-model="newEvent.start">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>End:</label>
+                  <input class="form-control" ng-model="newEvent.end">
+                </fieldset>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" ng-click="createEvent()">Add new changes</button>
             </div>
           </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
