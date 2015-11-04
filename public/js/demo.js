@@ -78,21 +78,21 @@ angular
     }
 
     vm.eventClicked = function(event) {
-      showModal('Clicked', event);
+      //showModal('Clicked', event);
     };
 
     vm.eventEdited = function(event) {
-      showModal('Edited', event);
+      //showModal('Edited', event);
     };
 
     vm.eventDeleted = function(event) {
-      showModal('Deleted', event);
-      console.log(event.$id);
-      vm.events.splice(event.$id, 1);
+      //showModal('Deleted', event);
+      //console.log(event.$id);
+      //vm.events.splice(event.$id, 1);
     };
 
     vm.eventTimesChanged = function(event) {
-      showModal('Dropped or resized', event);
+      //showModal('Dropped or resized', event);
     };
 
     vm.toggle = function($event, field, event) {
@@ -116,8 +116,8 @@ angular
               type: 'info',
               startsAt: new Date(element.start),
               endsAt: new Date(element.end),
-              draggable: true,
-              resizable: true
+              draggable: false,
+              resizable: false
             }
             vm.events.push(temp);
           });
