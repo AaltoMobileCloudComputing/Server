@@ -44,7 +44,7 @@ function getSyncReq(user, clientSecrets) {
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar']
     });
-    return res.render('sync-auth', {authUrl: authUrl});
+    return {authUrl: authUrl};
   }
   oauth2Client.credentials = user.tokens;
 
@@ -168,6 +168,7 @@ router.get('/', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
     var syncReq = getSyncReq(user, req.clientSecrets);
+    if (syncReq.hasOwnProperty("authUrl")) return res.json(syncReq);
     var syncResult = {};
 
     synchronizeMccToGoogle(user, req.db, syncReq).then(
