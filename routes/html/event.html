@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!-- Event edit view is implemented with AngularJS and Bootstrap 4 -->
+<!-- View uses CDNs for most of resources because this is more eficent for end user,
+     because enduser may have already cached these resources with another web app -->
+<!-- AngularJS decided because its powerfull and quite easy to use and also
+     because of its popularity these days provides loads of aditional components
+     and resources. Also AngularJS has very good documentation witch makes development
+     with it easier -->
+<!-- Bootstrap was selected for this web app because its popularity, easy of use
+     and nice design. Bootstrap 4 Alpha (http://v4-alpha.getbootstrap.com/) was
+     choosen because its new and its prettier than old version of Bootstrap -->
+<html ng-app="app">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>{{title}}</title>
+    <link rel="stylesheet"
+          href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/js/bootstrap.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.js"></script>
+    <script src="js/event.js"></script>
+  </head>
+  <body  ng-controller="simple">
+    <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
+      <div class="container">
+        <a class="navbar-brand" href="">{{title}}</a>
+        <ul class="nav navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link" href="" ng-click="openAddNew()">Add new event</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="calendar?token={{token}}">Show calendar</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav pull-right">
+          <li class="nav-item active">
+            <a class="nav-link" href="">
+              Hello, {{user.firstname + ' ' + user.lastname}}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      <div ng-repeat="event in events">
+        <div class="card">
+          <div class="card-block">
+            <h4 class="card-title">{{event.title}}</h4>
+            <p class="card-text">{{event.description}}</p>
+            <p class="card-text">Start: {{event.start}} End: {{event.end}}</p>
+            <button class="btn btn-sm btn-primary" ng-click="openEdit($index)">Edit</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="edit">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">Event edit: {{edit.title}}</h4>
+            </div>
+            <div class="modal-body">
+              <form>
+                <fieldset class="form-group">
+                  <label>Title:</label>
+                  <input class="form-control" ng-model="edit.title">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Description:</label>
+                  <input class="form-control" ng-model="edit.description">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Start:</label>
+                  <input class="form-control" ng-model="edit.start">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>End:</label>
+                  <input class="form-control" ng-model="edit.end">
+                </fieldset>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-danger" ng-click="deleteEvent()">Delete event</button>
+              <button type="button" class="btn btn-primary" ng-click="saveEvent()">Save changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+      <div class="modal fade" id="new">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">New event</h4>
+            </div>
+            <div class="modal-body">
+              <form>
+                <fieldset class="form-group">
+                  <label>Title:</label>
+                  <input class="form-control" ng-model="newEvent.title">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Description:</label>
+                  <input class="form-control" ng-model="newEvent.description">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>Start:</label>
+                  <input class="form-control" ng-model="newEvent.start">
+                </fieldset>
+                <fieldset class="form-group">
+                  <label>End:</label>
+                  <input class="form-control" ng-model="newEvent.end">
+                </fieldset>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" ng-click="createEvent()">Add new changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+    </div>
+  </body>
+</html>

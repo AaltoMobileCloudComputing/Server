@@ -1,128 +1,107 @@
 <!DOCTYPE html>
-<html ng-app="app">
+<!-- This code is modified sample form https://mattlewis.me/angular-bootstrap-calendar/ -->
+<!-- We have stript and modifed code down to suit project need and fitted to work with our backend caldar APIs -->
+<!-- Original caledar component is done wiht Bootstrap 3 so it is used for this page rather than Bootstrap 4 -->
+<html class="no-js">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>{{title}}</title>
-    <link rel="stylesheet"
-          href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
-    <link rel="stylesheet" href="css/app.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-    <script src="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/js/bootstrap.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.js"></script>
-    <script src="js/calendar.js"></script>
+    <title>Calendar view</title>
+    <meta name="description" content="Angular bootstrap calendar demo">
+    <meta name="viewport" content="width=device-width">
+    <style type="text/css">
+      [ng-cloak] {
+        display: none;
+      }
+    </style>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/angular-bootstrap-calendar.min.css">
+    <link rel="stylesheet" href="css/demo.css">
   </head>
-  <body  ng-controller="simple">
-    <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
-      <div class="container">
-        <a class="navbar-brand" href="">{{title}}</a>
-        <ul class="nav navbar-nav">
-          <li class="nav-item active">
-            <a class="nav-link" href="" ng-click="openAddNew()">Add new event</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="calendar?token={{token}}">Show calendar</a>
-          </li>
-        </ul>
-        <ul class="nav navbar-nav pull-right">
-          <li class="nav-item active">
-            <a class="nav-link" href="">
-              Hello, {{user.firstname + ' ' + user.lastname}}
-            </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
-    <div class="container">
-      <div ng-repeat="event in events">
-        <div class="card">
-          <div class="card-block">
-            <h4 class="card-title">{{event.title}}</h4>
-            <p class="card-text">{{event.description}}</p>
-            <p class="card-text">Start: {{event.start}} End: {{event.end}}</p>
-            <button class="btn btn-sm btn-primary" ng-click="openEdit($index)">Edit</button>
+  <body ng-app="demo" ng-cloak>
+
+    <div class="container-fluid">
+
+
+      <div class="row" ng-controller="MainCtrl as vm" id="demo">
+        <a class="btn btn-primary" href="event?token={{token}}"><h4>Edit Events</h4></a>
+
+        <div class="col-md-8 col-md-offset-2">
+          <h2 class="text-center">{{ vm.calendarTitle }}</h2>
+
+          <div class="row">
+
+            <div class="col-md-6 text-center">
+              <div class="btn-group">
+
+                <button
+                  class="btn btn-primary"
+                  mwl-date-modifier
+                  date="vm.calendarDay"
+                  decrement="vm.calendarView">
+                  Previous
+                </button>
+                <button
+                  class="btn btn-default"
+                  mwl-date-modifier
+                  date="vm.calendarDay"
+                  set-to-today>
+                  Today
+                </button>
+                <button
+                  class="btn btn-primary"
+                  mwl-date-modifier
+                  date="vm.calendarDay"
+                  increment="vm.calendarView">
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <br class="visible-xs visible-sm">
+
+            <div class="col-md-6 text-center">
+              <div class="btn-group">
+                <label class="btn btn-primary" ng-model="vm.calendarView" btn-radio="'year'">Year</label>
+                <label class="btn btn-primary" ng-model="vm.calendarView" btn-radio="'month'">Month</label>
+                <label class="btn btn-primary" ng-model="vm.calendarView" btn-radio="'week'">Week</label>
+                <label class="btn btn-primary" ng-model="vm.calendarView" btn-radio="'day'">Day</label>
+              </div>
+            </div>
+
           </div>
+
+          <br>
+
+          <mwl-calendar
+            events="vm.events"
+            view="vm.calendarView"
+            view-title="vm.calendarTitle"
+            current-day="vm.calendarDay"
+            on-event-click="vm.eventClicked(calendarEvent)"
+            on-event-times-changed="vm.eventTimesChanged(calendarEvent); calendarEvent.startsAt = calendarNewEventStart; calendarEvent.endsAt = calendarNewEventEnd"
+            edit-event-html=""
+            delete-event-html=""
+            on-edit-event-click="vm.eventEdited(calendarEvent)"
+            on-delete-event-click="vm.eventDeleted(calendarEvent)"
+            auto-open="true"
+            day-view-start="06:00"
+            day-view-end="22:00"
+            day-view-split="30"
+            cell-modifier="vm.modifyCell(calendarCell)">
+          </mwl-calendar>
+
         </div>
       </div>
 
-      <div class="modal fade" id="edit">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">Close</span>
-              </button>
-              <h4 class="modal-title">Event edit: {{edit.title}}</h4>
-            </div>
-            <div class="modal-body">
-              <form>
-                <fieldset class="form-group">
-                  <label>Title:</label>
-                  <input class="form-control" ng-model="edit.title">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>Description:</label>
-                  <input class="form-control" ng-model="edit.description">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>Start:</label>
-                  <input class="form-control" ng-model="edit.start">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>End:</label>
-                  <input class="form-control" ng-model="edit.end">
-                </fieldset>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-danger" ng-click="deleteEvent()">Delete event</button>
-              <button type="button" class="btn btn-primary" ng-click="saveEvent()">Save changes</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-      </div><!-- /.modal -->
-
-      <div class="modal fade" id="new">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">Close</span>
-              </button>
-              <h4 class="modal-title">New event</h4>
-            </div>
-            <div class="modal-body">
-              <form>
-                <fieldset class="form-group">
-                  <label>Title:</label>
-                  <input class="form-control" ng-model="newEvent.title">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>Description:</label>
-                  <input class="form-control" ng-model="newEvent.description">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>Start:</label>
-                  <input class="form-control" ng-model="newEvent.start">
-                </fieldset>
-                <fieldset class="form-group">
-                  <label>End:</label>
-                  <input class="form-control" ng-model="newEvent.end">
-                </fieldset>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" ng-click="createEvent()">Add new changes</button>
-            </div>
-          </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-      </div><!-- /.modal -->
-
     </div>
-  </body>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.4/interact.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.6/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.6/angular-touch.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.6/angular-animate.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.13.4/ui-bootstrap-tpls.min.js"></script>
+    <script src="js/angular-bootstrap-calendar-tpls.min.js"></script>
+    <script src="js/calendar.js"></script>
+</body>
 </html>
