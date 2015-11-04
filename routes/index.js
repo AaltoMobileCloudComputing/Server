@@ -8,9 +8,13 @@ router.get('/', function(req, res, next) {
   //res.render('index', { title: 'Express' });
 });
 
-router.get('/calendar', function(req, res, next) {
+router.get('/event', function(req, res, next) {
   res.sendFile(__dirname + "/html/calendar.html");
   //res.render('index', { title: 'Express' });
+});
+
+router.get('/calendar', function(req, res, next) {
+  res.sendFile(__dirname + "/html/new.html");
 });
 
 
