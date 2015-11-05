@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!-- This code is modified sample form https://mattlewis.me/angular-bootstrap-calendar/ -->
 <!-- We have stript and modifed code down to suit project need and fitted to work with our backend caldar APIs -->
-<!-- Original caledar component is done wiht Bootstrap 3 so it is used for this page rather than Bootstrap 4 -->
-<html class="no-js">
+<!-- Original caledar component is done wiht Bootstrap 3 but we modified it work with Bootstrap 4 Alpaha -->
+<html class="no-js" ng-app="demo" >
   <head>
     <meta charset="utf-8">
     <title>Calendar view</title>
@@ -13,17 +13,34 @@
         display: none;
       }
     </style>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
     <link rel="stylesheet" href="css/angular-bootstrap-calendar.min.css">
     <link rel="stylesheet" href="css/demo.css">
+    <link rel="stylesheet" href="css/app.css">
   </head>
-  <body ng-app="demo" ng-cloak>
+  <body ng-controller="MainCtrl as vm"  ng-cloak>
+
+    <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
+      <div class="container">
+        <a class="navbar-brand" href="">Calendar</a>
+        <form class="form-inline navbar-form pull-left">
+          <a class="btn btn-primary-outline" href="event?token={{token}}">Edit Events</a>
+        </form>
+        <ul class="nav navbar-nav pull-right">
+          <li class="nav-item active">
+            <a class="nav-link" href="">
+              Hello, {{user.firstname + ' ' + user.lastname}}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
 
     <div class="container-fluid">
 
 
-      <div class="row" ng-controller="MainCtrl as vm" id="demo">
-        <a class="btn btn-primary" href="event?token={{token}}"><h4>Edit Events</h4></a>
+      <div class="row" id="demo">
 
         <div class="col-md-8 col-md-offset-2">
           <h2 class="text-center">{{ vm.calendarTitle }}</h2>

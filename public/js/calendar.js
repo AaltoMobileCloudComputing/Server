@@ -5,6 +5,7 @@ angular
   .controller('MainCtrl', function ($scope, $http, $modal, moment) {
 
     var vm = this;
+    $scope.user = {};
 
     $scope.getQueryVariable = function (variable) {
          // Sample from https://css-tricks.com/snippets/javascript/get-url-variables/
@@ -15,6 +16,21 @@ angular
                  if(pair[0] == variable){return pair[1];}
          }
          return(null);
+    }
+
+    $scope.getUser = function() {
+      var url = '/api/user';
+      url = url + '/' + $scope.token;
+      $http.get(url).
+        success(function(data, status, headers, config) {
+          console.log(data);
+          console.log(status);
+          $scope.user = data;
+        }).
+        error(function(data, status, headers, config) {
+          console.log(data);
+          console.log(status);
+        });
     }
 
     //These variables MUST be set as a minimum for the calendar to work
@@ -72,5 +88,6 @@ angular
     }
     $scope.token = $scope.getQueryVariable("token");
     $scope.getEvents();
+    $scope.getUser();
 
   });
