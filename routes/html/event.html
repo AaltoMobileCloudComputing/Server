@@ -27,6 +27,7 @@
     <nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
       <div class="container">
         <a class="navbar-brand" href="">{{title}}</a>
+<!--
         <ul class="nav navbar-nav">
           <li class="nav-item active">
             <a class="nav-link" href="" ng-click="openAddNew()">Add new event</a>
@@ -34,7 +35,16 @@
           <li class="nav-item active">
             <a class="nav-link" href="calendar?token={{token}}">Show calendar</a>
           </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="" ng-click="">Sync with Google</a>
+          </li>
         </ul>
+      -->
+        <form class="form-inline navbar-form pull-left">
+          <a class="btn btn-primary-outline" href="calendar?token={{token}}">Show Calendar</a>
+          <button class="btn btn-primary-outline" ng-click="openAddNew()">Add New Event</button>
+          <button class="btn btn-primary-outline" ng-click="openSync()">Sync with Google</button>
+        </form>
         <ul class="nav navbar-nav pull-right">
           <li class="nav-item active">
             <a class="nav-link" href="">
@@ -128,6 +138,52 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-primary" ng-click="createEvent()">Add new changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+      <div class="modal fade" id="sync">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">Sync with Google Calendar</h4>
+            </div>
+            <div class="modal-body">
+              <p>
+                To sync with Goole Calendar you need to authenticate to Google
+                <br>
+                <br>
+                To authenticate with Google first push button bellow and authticate into Google
+                <br>
+                <br>
+                Then you will be presented with authentication code that needs to be copied
+                into text box bellow and saved to serice
+                <br>
+                After that your calendar will be automatically sync with Google Calendar
+              </p>
+              <button class="btn btn-success" ng-click="openGoogleAuth()">Sync with Google Calendar</button>
+              <br><br>
+              <form>
+                <div class="row">
+                  <fieldset class="form-group">
+                    <div class="col-md-2">
+                        <label>Security code:</label>
+                    </div>
+                    <div class="col-md-10">
+                      <input class="form-control" ng-model="secCode">
+                    </div>
+                  </fieldset>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-success" ng-click="postSyncCode()">Save</button>
             </div>
           </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->

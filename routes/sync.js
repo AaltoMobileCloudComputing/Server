@@ -218,7 +218,7 @@ router.post('/', function (req, res) {
       util.insertOne(syncCalendar, req.db.collection('calendars')).then(function() {
         return util.updateOne(user._id, req.db.collection('users'), {$addToSet: {calendars: syncCalendar._id}, $set: {tokens: tokens, synccalendar: syncCalendar._id}});
       }).then(function () {
-        return res.redirect('/sync?token=' + user.token);
+        return res.redirect('/api/sync?token=' + user.token);
       }).catch(function() {
         return res.err400('Failed to update sync credentials')
       });
