@@ -1,4 +1,5 @@
 exports.err400 = function (error) {
+  console.log("ERROR " + error.message || error);
   return this.status(400).json({error: error.message || error});
 };
 

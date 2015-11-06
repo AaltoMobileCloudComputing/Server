@@ -55,7 +55,13 @@ router.post('/', function (req, res) {
         };
 
         return util.insertOne(calendar, req.db.collection('calendars')).then(function() {
-          return util.updateOne(user._id, req.db.collection('users'), {$addToSet: {calendars: calendar._id}});
+          var userUpdate = {
+            $addToSet: {calendars: calendar._id}
+          };
+          if (!user.primary) {
+            userUpdate.$set = {primary: calendar._id};
+          }
+          return util.updateOne(user._id, req.db.collection('users'), userUpdate);
         }).then(function () {
           return res.json(calendar);
         });

@@ -30,7 +30,8 @@ Fields marked with * are mandatory (i.e. they need to be specified when creating
         access_token : String
         refresh_token : String
     synctoken : String
-    synccalendar : ObjectID
+    syncinitialized : Boolean
+    primary : ObjectID
     
 ## Changes
     _id : ObjectID

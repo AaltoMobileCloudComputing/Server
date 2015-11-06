@@ -16,7 +16,7 @@ angular
                  if(pair[0] == variable){return pair[1];}
          }
          return(null);
-    }
+    };
 
     $scope.getUser = function() {
       var url = '/api/user';
@@ -31,7 +31,7 @@ angular
           console.log(data);
           console.log(status);
         });
-    }
+    };
 
     //These variables MUST be set as a minimum for the calendar to work
     vm.calendarView = 'month';
@@ -76,7 +76,7 @@ angular
               endsAt: new Date(element.end),
               draggable: false,
               resizable: false
-            }
+            };
             vm.events.push(temp);
           });
           console.log(status);
@@ -85,7 +85,7 @@ angular
           console.log(data);
           console.log(status);
         });
-    }
+    };
     $scope.token = $scope.getQueryVariable("token");
     $scope.getEvents();
     $scope.getUser();

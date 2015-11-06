@@ -22,7 +22,7 @@ function($scope, $rootScope, $http) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.createNewUser = function() {
     var url = '/api/user';
@@ -36,7 +36,7 @@ function($scope, $rootScope, $http) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.createCalendar = function(token, username, callback) {
     var url = '/api/calendar?token=' + token;
@@ -51,7 +51,7 @@ function($scope, $rootScope, $http) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.toCalendar = function(token) {
     window.location.replace('/calendar?token=' +  token);

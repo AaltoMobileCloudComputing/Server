@@ -86,7 +86,7 @@ router.post('/', function (req, res) {
           end: times.end
         };
         return util.insertOne(event, req.db.collection('events')).then(function() {
-          if (calendarId.equals(user.synccalendar)) {
+          if (calendarId.equals(user.primary) && user.syncinitialized) {
             return insertChange(user._id, event._id, 'insert', req.db).then(
                 function() {
                   res.json(event)
@@ -130,7 +130,7 @@ router.post('/:id', function (req, res) {
       function() {
         return util.updateOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events, {$set: eventUpdate}).then(
             function (updated) {
-              if (updated.value.calendar.equals(user.synccalendar)) {
+              if (updated.value.calendar.equals(user.primary) && user.syncinitialized) {
                 return insertChange(user._id, id, 'update', req.db).then(
                     function() {
                       res.json(updated.value)
@@ -159,7 +159,7 @@ router.delete('/:id', function (req, res) {
     var events = req.db.collection('events');
     util.deleteOneWithQuery({_id: id, calendar: {$in: user.calendars}}, events).then(
         function (result) {
-          if (result.value.calendar.equals(user.synccalendar)) {
+          if (result.value.calendar.equals(user.primary) && user.syncinitialized) {
             return insertChange(user._id, id, 'delete', req.db).then(
                 function() {
                   res.json(result.value)

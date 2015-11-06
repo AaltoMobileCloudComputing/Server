@@ -8,8 +8,8 @@ function($scope, $rootScope, $http, $sce) {
   $scope.authUrl = "";
   $scope.secCode = "";
   $scope.events = [];
-  $scope.edit = {}
-  $scope.user = {}
+  $scope.edit = {};
+  $scope.user = {};
   $scope.newEvent = {calendar: "", title: "", description: "", start: "", end: ""}
   $scope.trustAsResourceUrl = $sce.trustAsResourceUrl;
 
@@ -22,11 +22,11 @@ function($scope, $rootScope, $http, $sce) {
                if(pair[0] == variable){return pair[1];}
        }
        return(null);
-  }
+  };
 
   $scope.jsonToStr = function(time) {
     return new Date(time).toString();
-  }
+  };
 
   $scope.getEvents = function() {
     var url = '/api/event?';
@@ -45,7 +45,7 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.saveEvent = function() {
     var url = '/api/event/';
@@ -63,7 +63,7 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.deleteEvent = function() {
     var url = '/api/event/';
@@ -81,7 +81,7 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.createEvent = function() {
     var url = '/api/event';
@@ -98,7 +98,7 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.getUser = function() {
     var url = '/api/user';
@@ -108,13 +108,13 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
         $scope.user = data;
-        $scope.newEvent.calendar = $scope.user.calendars[0];
+        $scope.newEvent.calendar = $scope.user.primary;
       }).
       error(function(data, status, headers, config) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.getSyncUrl = function() {
     var url = '/api/sync';
@@ -134,7 +134,7 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.postSyncCode = function() {
     var url = '/api/sync';
@@ -149,33 +149,29 @@ function($scope, $rootScope, $http, $sce) {
         console.log(data);
         console.log(status);
       });
-  }
+  };
 
   $scope.openEdit = function(index) {
       $scope.edit = $scope.events[index];
       $('#edit').modal('show');
-  }
+  };
 
   $scope.openAddNew = function() {
     $('#new').modal('show');
-  }
+  };
 
   $scope.openSync = function() {
       $scope.getSyncUrl();
-  }
+  };
 
   $scope.openGoogleAuth = function() {
     window.open($scope.trustAsResourceUrl($scope.authUrl),
                 '_blank',
                 'height=600, width=600, menubar=no, status=no');
-  }
-
-
+  };
 
   $scope.token = $scope.getQueryVariable("token");
-  //console.log($scope.token);
   $scope.getUser();
-  //console.log($scope.user);
   $scope.getEvents();
 
 }]);

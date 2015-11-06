@@ -21,8 +21,8 @@ function convertEventGoogleToMcc(event) {
     _id: util.convertStrToId(event.id),
     title: event.summary,
     description: event.description,
-    start: event.start.dateTime || event.start.date,
-    end: event.end.dateTime || event.end.date
+    start: new Date(event.start.dateTime || event.start.date),
+    end: new Date(event.end.dateTime || event.end.date)
   }
 }
 
@@ -34,6 +34,18 @@ function convertEventMccToGoogle(event) {
     start: {dateTime: event.start.toISOString()},
     end: {dateTime: event.end.toISOString()}
   }
+}
+
+function copySyncReq(syncReq) {
+  // It's better to copy the initially created syncReq than reuse the same because lingering parameters might cause
+  // errors
+  return {
+    auth: syncReq.auth,
+    calendarId: syncReq.calendarId,
+    syncToken: syncReq.syncToken,
+    timeMin: syncReq.timeMin,
+    pageToken: syncReq.pageToken
+  };
 }
 
 function getSyncReq(user, clientSecrets) {
@@ -76,8 +88,33 @@ function getEventApiPromise(syncReq, type) {
  * SYNC
  */
 
+function synchronizeMccToGoogleInitial(user, db, syncReq) {
+  var eventsCollection = db.collection('events');
+  var usersCollection = db.collection('users');
+
+  return eventsCollection.find({calendar: user.primary}).toArray().then(
+      function (events) {
+        var syncResult = {
+          promises: [],
+          upserted: 0,
+          deleted: 0
+        };
+        events.forEach(function (event) {
+          var sr = copySyncReq(syncReq);
+          sr.eventId = util.convertIdToStr(event._id);
+          sr.resource = convertEventMccToGoogle(event);
+          syncResult.upserted++;
+          syncResult.promises.push(getEventApiPromise(sr, 'insert'));
+        });
+        syncResult.promises.push(util.updateOne(user._id, usersCollection, {$set: {syncinitialized: true}}));
+        return syncResult;
+      }
+  );
+}
 
 function synchronizeMccToGoogle(user, db, syncReq) {
+  if (!user.syncinitialized) return synchronizeMccToGoogleInitial(user, db, syncReq);
+
   var eventsCollection = db.collection('events');
   var changesCollection = db.collection('changes');
 
@@ -90,20 +127,21 @@ function synchronizeMccToGoogle(user, db, syncReq) {
         };
         changes.forEach(function (change) {
           var p;
-          syncReq.eventId = util.convertIdToStr(change.event);
+          var sr = copySyncReq(syncReq);
+          sr.eventId = util.convertIdToStr(change.event);
           switch (change.type) {
             case 'insert':
             case 'update':
               p = util.findOne(change.event, eventsCollection).then(
                   function(event) {
-                    syncReq.resource = convertEventMccToGoogle(event);
-                    return getEventApiPromise(syncReq, change.type);
+                    sr.resource = convertEventMccToGoogle(event);
+                    return getEventApiPromise(sr, change.type);
                   }
               );
               syncResult.upserted++;
               break;
             case 'delete':
-              p = getEventApiPromise(syncReq, 'delete');
+              p = getEventApiPromise(sr, 'delete');
               syncResult.deleted++;
               break;
             default:
@@ -128,6 +166,7 @@ function synchronizeGoogleToMcc(user, db, syncReq) {
     calendar.events.list(syncReq, function (err, response) {
       if (err !== null) return reject(err);
 
+      console.log(JSON.stringify(syncReq));
       var events = response.items;
       var syncResult = {
         promises: [],
@@ -139,7 +178,7 @@ function synchronizeGoogleToMcc(user, db, syncReq) {
           var convertedId = util.convertStrToId(event.id);
           if (event.status !== 'cancelled') {
             var convertedEvent = convertEventGoogleToMcc(event);
-            convertedEvent.calendar = user.synccalendar;
+            convertedEvent.calendar = user.primary;
             syncResult.promises.push(util.upsertOne(convertedId, eventsCollection, convertedEvent));
             syncResult.upserted++;
           } else {
@@ -189,6 +228,7 @@ router.get('/', function (req, res) {
         function() {
           delete syncResult.toGoogle.promises;
           delete syncResult.toMcc.promises;
+          console.log("SYNC RESULT " + JSON.stringify(syncResult, null, 2));
           return res.json({result: syncResult})
         }
     ).catch(
@@ -214,10 +254,7 @@ router.post('/', function (req, res) {
       }
       oauth2Client.credentials = tokens;
 
-      var syncCalendar = {title: 'Google Calendar'};
-      util.insertOne(syncCalendar, req.db.collection('calendars')).then(function() {
-        return util.updateOne(user._id, req.db.collection('users'), {$addToSet: {calendars: syncCalendar._id}, $set: {tokens: tokens, synccalendar: syncCalendar._id}});
-      }).then(function () {
+      util.updateOne(user._id, req.db.collection('users'), {$set: {tokens: tokens, syncinitialized: false}}).then(function () {
         return res.redirect('/api/sync?token=' + user.token);
       }).catch(function() {
         return res.err400('Failed to update sync credentials')
