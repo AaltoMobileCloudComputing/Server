@@ -4,7 +4,7 @@ Fields marked with * are mandatory (i.e. they need to be specified when creating
 
 ## Events
     _id : ObjectID (String if synced from GCal)
-    calendar : ObjectID *
+    calendar : ObjectID (User's primary calendar if not specified)
     title : String *
     description : String
     start: ISODate *

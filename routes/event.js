@@ -69,7 +69,7 @@ router.get('/:id', function (req, res) {
 router.post('/', function (req, res) {
   util.auth(req, function (user) {
     if (user == null) return res.err400("Invalid token");
-    var calendarId = util.convertStrToId(req.body.calendar);
+    var calendarId = util.convertStrToId(req.body.calendar) || user.primary; // User primary calendar by default
     if (util.idInList(calendarId, user.calendars)) return res.err400("Calendar not accessible");
     util.findOne(calendarId, req.db.collection('calendars')).then(
       function() {
