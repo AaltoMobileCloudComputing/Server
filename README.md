@@ -1,18 +1,6 @@
 # MCC Awesome Project
 
-## Accessing VM
-
-    # Local
-    ssh mccgroup16@echo.niksula.hut.fi
-
-    # On echo
-    ./ssh-vm.sh
-
-## SOCKS Proxy
-
-    ssh -D 2001 mccgroup16@echo.niksula.hut.fi
-
-After this set your computer to use proxy `127.0.0.1:2001`
+This is project done for Aalto University course [Mobile Cloud Computing T-110.5121](to.fi/course/view.php?id=8779)
 
 ## Service
 Place `mcc.conf` under `/etc/init`. After that the service can be started and stopped using
